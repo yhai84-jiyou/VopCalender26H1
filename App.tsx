@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DayType, CalendarDay } from './types';
 import { WEEKDAYS, COLORS, isHoliday } from './constants';
 
@@ -75,6 +75,11 @@ const SprintSection: React.FC<{
 
 const App: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
+  const [deployHost, setDeployHost] = useState('');
+
+  useEffect(() => {
+    setDeployHost(window.location.hostname);
+  }, []);
 
   const generateSprint = (
     id: string, 
@@ -124,33 +129,28 @@ const App: React.FC = () => {
 
   const handleDownloadProject = () => {
     setIsExporting(true);
-    // 模拟导出所有核心组件代码
-    const projectContent = `
-=== VOP 2026 H1 PROJECT BACKUP ===
-Generated: ${new Date().toISOString()}
-
---- App.tsx ---
-${document.querySelector('script[type="module"]')?.innerHTML || '见当前编辑器内容'}
-
---- 提示 ---
-1. 如果要在新电脑恢复，请将这段文字提供给 AI 助手。
-2. 建议直接在当前页面按下 Ctrl+S 保存完整的 HTML。
-    `;
+    const backupData = {
+      project: "VOP_2026_H1_Calendar",
+      version: "2.3",
+      timestamp: new Date().toISOString(),
+      host: deployHost,
+      note: "Project status metadata"
+    };
     
-    const blob = new Blob([projectContent], { type: 'text/plain' });
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `VOP_Calendar_Backup_${new Date().toLocaleDateString()}.txt`;
+    link.download = `VOP_H1_Config.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
-    setTimeout(() => setIsExporting(false), 3000);
+    setTimeout(() => setIsExporting(false), 2000);
   };
 
   return (
-    <div className="max-w-md mx-auto bg-slate-50 min-h-screen pb-20">
+    <div className="max-w-md mx-auto bg-slate-50 min-h-screen pb-20 font-sans">
       <header className="bg-white p-6 border-b border-slate-200 sticky top-0 z-20 shadow-sm">
         <div className="flex items-start justify-between">
           <div>
@@ -191,26 +191,32 @@ ${document.querySelector('script[type="module"]')?.innerHTML || '见当前编辑
         ))}
 
         <footer className="py-8 text-center opacity-30 select-none">
-          <p className="text-[9px] font-black tracking-[0.5em] text-slate-900 uppercase">INTERNAL AGILITY TOOL V2.0</p>
-          <p className="text-[8px] mt-2 text-slate-500 italic">防止丢失：点击右下角按钮下载备份文件</p>
+          <p className="text-[9px] font-black tracking-[0.5em] text-slate-900 uppercase">INTERNAL AGILITY TOOL V2.3</p>
+          <div className="mt-4 flex flex-col items-center gap-1">
+            <p className="text-[8px] text-slate-500 italic">部署于 {deployHost || 'Local'}</p>
+            <div className="flex gap-2">
+               <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></span>
+               <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse delay-75"></span>
+               <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse delay-150"></span>
+            </div>
+          </div>
         </footer>
       </main>
 
-      {/* Persistence Button */}
+      {/* Action Button */}
       <div className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-3">
         <button 
           onClick={handleDownloadProject}
-          className={`${isExporting ? 'bg-green-600' : 'bg-blue-600'} text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all font-bold text-sm`}
+          className={`${isExporting ? 'bg-green-600' : 'bg-slate-900'} text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-all font-bold text-sm`}
         >
           {isExporting ? (
-            <>已保存备份文件</>
+            <>已生成配置备份</>
           ) : (
             <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V4a1 1 0 10-2 0v7.586l-1.293-1.293z" />
-                <path d="M5 17a2 2 0 01-2-2V7a2 2 0 012-2 1 1 0 010 2v8h10V7a1 1 0 112 0v8a2 2 0 01-2 2H5z" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              一键下载备份
+              导出元数据备份
             </>
           )}
         </button>
